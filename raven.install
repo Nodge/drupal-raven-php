@@ -1,0 +1,85 @@
+<?php
+/**
+ * @file
+ * Install, update, and uninstall functions for the raven module.
+ */
+
+/**
+ * Implements HOOK_enable().
+ */
+function raven_enable() {
+
+}
+
+/**
+ * Implements hook_install().
+ */
+function raven_uninstall() {
+	variable_del('raven_enabled');
+	variable_del('raven_dsn');
+	variable_del('raven_timeout');
+	variable_del('raven_exception_handler');
+	variable_del('raven_fatal_error_handler');
+	variable_del('raven_error_handler');
+	variable_del('raven_error_levels');
+	variable_del('raven_stack');
+	variable_del('raven_trace');
+}
+
+/**
+ * Implementation of hook_requirements().
+ *
+ * @param string $phase The phase in which hook_requirements is run: install/runtime.
+ * @return array
+ */
+function raven_requirements($phase) {
+  $requirements = array();
+
+  switch ($phase) {
+    case 'runtime':
+      $raven = libraries_load('raven');
+
+      if ($raven) {
+        $requirements['raven_version'] = array(
+          'title' => t('Raven-php client'),
+          'value' => $raven['version'],
+          'description' => t('To check for newer versions of raven-php, go to <a href="!url" target="_blank">!url</a>', array("!url" => url('https://github.com/getsentry/raven-php'))),
+          'severity' => REQUIREMENT_OK,
+        );
+      }
+
+      if (!variable_get('raven_enabled', FALSE)) {
+        $requirements['raven_enabled'] = array(
+          'title' => t('Raven-php logging'),
+          'value' => t('Disabled'),
+          'description' => t('Raven-php logging is disabled.'),
+          'severity' => REQUIREMENT_WARNING,
+        );
+      }
+      else {
+        $requirements['raven_dsn'] = array(
+          'title' => t('Raven-php logging'),
+          'value' => t('Enabled'),
+          'description' => t('Raven-php is set to log to !dsn.', array('!dsn' => variable_get('raven_dsn'))),
+          'severity' => REQUIREMENT_OK,
+        );
+      }
+
+      // todo: enabled javascript logging?
+
+      if (!$raven) {
+        $requirements['raven_library'] = array(
+          'title' => t('Raven-php client'),
+          'description' => t('The raven-php library was not detected. Please install the <a href="!url" target="_blank">raven-php library</a>.', array("!url" => url('https://github.com/getsentry/raven-php'))),
+          'severity' => REQUIREMENT_ERROR,
+        );
+      }
+
+      break;
+
+    default:
+      break;
+  }
+
+  return $requirements;
+}
