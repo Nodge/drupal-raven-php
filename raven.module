@@ -192,12 +192,17 @@ function raven_watchdog($log_entry) {
  */
 function _raven_get_client() {
   static $client;
+  static $message_sent = false;
 
   if (!isset($client)) {
     $library = libraries_load('raven');
 
     if (!$library['loaded']) {
-      drupal_set_message(t('Raven library can not be loaded.'), 'error');
+      // this function can be called multiple times, so prevent multiple messages
+      if (!$message_sent) {
+        drupal_set_message(t('Raven library can not be loaded.'), 'error');
+        $message_sent = true;
+      }
       return null;
     }
 
@@ -229,9 +234,8 @@ function raven_raven_user_alter(&$variables) {
   global $user;
   if (user_is_logged_in()) {
     $variables['id'] = $user->uid;
-    if (!empty($user->mail)) {
-      $variables['email'] = $user->mail;
-    }
+    $variables['name'] = $user->name;
+    $variables['email'] = $user->mail;
     $variables['roles'] = implode(', ', $user->roles);
   }
 }

@@ -7,11 +7,10 @@
  */
 function hook_raven_user_alter(&$user) {
   global $user;
-  if (!empty($user->uid)) {
+  if (user_is_logged_in()) {
     $variables['id'] = $user->uid;
-    if (!empty($user->mail)) {
-      $variables['email'] = $user->mail;
-    }
+    $variables['name'] = $user->name;
+    $variables['email'] = $user->mail;
     $variables['roles'] = implode(', ', $user->roles);
   }
 }

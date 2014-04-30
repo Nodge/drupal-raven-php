@@ -7,6 +7,8 @@
  */
 
 function raven_settings_form($form, &$form_state) {
+  _raven_get_client(); // show message if library can not be loaded
+
   $form['raven_enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable Raven-php logging'),
