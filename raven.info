@@ -4,5 +4,4 @@ core = 7.x
 version = 7.x-1.0
 package = Development
 dependencies[] = libraries (2.x)
-#files[] = webform_settings_access.module
 configure = admin/config/development/raven
