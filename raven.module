@@ -200,7 +200,10 @@ function _raven_get_client() {
     if (!$library['loaded']) {
       // this function can be called multiple times, so prevent multiple messages
       if (!$message_sent) {
-        drupal_set_message(t('Raven library can not be loaded.'), 'error');
+        $message = 'Raven-php library can not be loaded. Check <a href="!url">reports</a> for more details.';
+        drupal_set_message(t($message, array(
+          '!url' => url('admin/reports/status'),
+        )), 'error');
         $message_sent = true;
       }
       return null;
