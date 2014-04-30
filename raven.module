@@ -110,7 +110,8 @@ function raven_init() {
   }
 
   if ($fatal_error_handler) {
-    $raven_error_handler->registerShutdownFunction();
+    $reserved_memory = variable_get('raven_fatal_error_handler_memory', 2.5*1024);
+    $raven_error_handler->registerShutdownFunction($reserved_memory);
   }
 
   if ($error_handler) {

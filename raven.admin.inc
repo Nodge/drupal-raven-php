@@ -54,6 +54,14 @@ function raven_settings_form($form, &$form_state) {
     '#default_value' => variable_get('raven_fatal_error_handler', TRUE),
   );
 
+  $form['raven_settings']['raven_fatal_error_handler_memory'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Reserved memory'),
+    '#description' => t('Reserved memory for fatal error handler (KB).'),
+    '#default_value' => variable_get('raven_fatal_error_handler_memory', 2.5*1024),
+    '#size' => 10,
+  );
+
   $form['raven_settings']['raven_error_handler'] = array(
     '#type' => 'fieldset',
     '#title' => t('Error handler'),
