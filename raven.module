@@ -86,6 +86,7 @@ function raven_init() {
   // config
   $exception_handler = variable_get('raven_exception_handler', TRUE);
   $fatal_error_handler = variable_get('raven_fatal_error_handler', TRUE);
+  $error_handler = variable_get('raven_error_handler', TRUE);
 
   // bind the logged in user
   $user = array();
@@ -102,8 +103,7 @@ function raven_init() {
   drupal_alter('raven_extra', $extra);
   $client->extra_context($extra);
 
-  // Install error handlers and shutdown function to catch fatal errors
-  $raven_error_handler = new Raven_ErrorHandler($client);
+  $raven_error_handler = _raven_get_error_handler();
 
   if ($exception_handler) {
     $raven_error_handler->registerExceptionHandler();
@@ -112,6 +112,61 @@ function raven_init() {
   if ($fatal_error_handler) {
     $raven_error_handler->registerShutdownFunction();
   }
+
+  if ($error_handler) {
+    $old_error_handler = set_error_handler('_raven_error_handler');
+    $GLOBALS['_raven_old_error_handler'] = $old_error_handler;
+  }
+}
+
+/**
+ * @param int $code
+ * @param string $message
+ * @param string $file
+ * @param int $line
+ * @param array $context
+ */
+function _raven_error_handler($code, $message, $file = '', $line = 0, $context = array()) {
+  $error_levels = _raven_get_enabled_error_levels();
+  if ($error_levels & $code & error_reporting()) {
+    $filter = array(
+      'process' => TRUE,
+      'code' => $code,
+      'message' => $message,
+      'file' => $file,
+      'line' => $line,
+      'context' => $context,
+    );
+    drupal_alter('raven_error_filter', $filter);
+
+    if ($filter['process']) {
+      $raven_error_handler = _raven_get_error_handler();
+      $e = new ErrorException($message, 0, $code, $file, $line);
+      $raven_error_handler->handleException($e, TRUE, $context);
+    }
+  }
+
+  $old_error_handler = $GLOBALS['_raven_old_error_handler'];
+  if ($old_error_handler) {
+    call_user_func($old_error_handler, $code, $message, $file, $line, $context);
+  }
+}
+
+/**
+ * @return int
+ */
+function _raven_get_enabled_error_levels() {
+  static $error_levels;
+  if (!isset($error_levels)) {
+    $error_levels = 0;
+    $enabled_error_types = variable_get('raven_error_levels', array());
+    foreach ($enabled_error_types as $level => $enabled) {
+      if ($enabled) {
+        $error_levels |= $level;
+      }
+    }
+  }
+  return $error_levels;
 }
 
 /**
@@ -122,28 +177,30 @@ function raven_watchdog($log_entry) {
     return;
   }
 
-  // config
-  $error_handler = variable_get('raven_error_handler', TRUE);
-
-  if (!$error_handler) {
+  if (!variable_get('raven_watchdog_handler', FALSE)) {
     return;
   }
 
-  $_error_levels = variable_get('raven_error_levels', array());
-  $error_levels = array();
-  foreach ($_error_levels as $level) {
-    $error_levels[] = (int) substr($level, 1);
+  // do not process php errors
+  if ($log_entry['type'] === 'php') {
+    return;
   }
 
-  if (!in_array($log_entry['severity'], $error_levels)) {
+  $_watchdog_levels = variable_get('raven_error_levels', array());
+  $watchdog_levels = array();
+  foreach ($_watchdog_levels as $level) {
+    $watchdog_levels[] = $level - 1;
+  }
+
+  if (!in_array($log_entry['severity'], $watchdog_levels)) {
     return;
   }
 
   $filter = array(
-    'process' => $log_entry['type'] === 'php', // default to true for PHP errors
+    'process' => TRUE,
     'log_entry' => $log_entry,
   );
-  drupal_alter('raven_error_filter', $filter);
+  drupal_alter('raven_watchdog_filter', $filter);
 
   if (!$filter['process']) {
     return;
@@ -176,7 +233,7 @@ function raven_watchdog($log_entry) {
       'referer' => $log_entry['referer'],
       'ip' => $log_entry['ip'],
     ),
-    'logger' => 'watchdog'
+    'logger' => 'watchdog',
   );
 
   $client = _raven_get_client();
@@ -184,7 +241,7 @@ function raven_watchdog($log_entry) {
     return;
   }
 
-  $client->capture($data, null);
+  $client->capture($data, NULL);
 }
 
 /**
@@ -192,7 +249,7 @@ function raven_watchdog($log_entry) {
  */
 function _raven_get_client() {
   static $client;
-  static $message_sent = false;
+  static $message_sent = FALSE;
 
   if (!isset($client)) {
     $library = libraries_load('raven');
@@ -204,9 +261,9 @@ function _raven_get_client() {
         drupal_set_message(t($message, array(
           '!url' => url('admin/reports/status'),
         )), 'error');
-        $message_sent = true;
+        $message_sent = TRUE;
       }
-      return null;
+      return NULL;
     }
 
     // config
@@ -230,7 +287,71 @@ function _raven_get_client() {
 }
 
 /**
+ * @return Raven_ErrorHandler
+ */
+function _raven_get_error_handler() {
+  static $handler;
+
+  if (!isset($handler)) {
+    $client = _raven_get_client();
+    if ($client) {
+      $handler = new Raven_ErrorHandler($client);
+    }
+  }
+
+  return $handler;
+}
+
+/**
+ * @return array
+ */
+function raven_get_error_levels() {
+  $levels = array(
+    E_ERROR => 'E_ERROR',
+    E_WARNING => 'E_WARNING',
+    E_PARSE => 'E_PARSE',
+    E_NOTICE => 'E_NOTICE', // not really useful for Drupal
+    E_CORE_ERROR => 'E_CORE_ERROR',
+    E_CORE_WARNING => 'E_CORE_WARNING',
+    E_COMPILE_ERROR => 'E_COMPILE_ERROR',
+    E_COMPILE_WARNING => 'E_COMPILE_WARNING',
+    E_USER_ERROR => 'E_USER_ERROR',
+    E_USER_WARNING => 'E_USER_WARNING',
+    E_USER_NOTICE => 'E_USER_NOTICE',
+    E_STRICT => 'E_STRICT', // not really useful for Drupal
+    E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
+  );
+
+  if (version_compare(PHP_VERSION, '5.3.0', '>=')) {
+    $levels += array(
+      E_DEPRECATED => 'E_DEPRECATED',
+      E_USER_DEPRECATED => 'E_USER_DEPRECATED',
+    );
+  }
+
+  return $levels;
+}
+
+/**
+ * @return array
+ */
+function raven_get_watchdog_levels() {
+  $levels = array(
+    WATCHDOG_DEBUG => 'WATCHDOG_DEBUG',
+    WATCHDOG_INFO => 'WATCHDOG_INFO',
+    WATCHDOG_ALERT => 'WATCHDOG_ALERT',
+    WATCHDOG_NOTICE => 'WATCHDOG_NOTICE',
+    WATCHDOG_WARNING => 'WATCHDOG_WARNING',
+    WATCHDOG_ERROR => 'WATCHDOG_ERROR',
+    WATCHDOG_CRITICAL => 'WATCHDOG_CRITICAL',
+    WATCHDOG_EMERGENCY => 'WATCHDOG_EMERGENCY',
+  );
+  return $levels;
+}
+
+/**
  * Default implementation of hook_raven_user_alter().
+ *
  * @param array $variables
  */
 function raven_raven_user_alter(&$variables) {

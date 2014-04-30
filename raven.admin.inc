@@ -50,32 +50,63 @@ function raven_settings_form($form, &$form_state) {
   $form['raven_settings']['raven_fatal_error_handler'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable fatal error handler'),
-    '#description' => t('Check for handling fatal errors.'),
+    '#description' => t('Check for handling fatal php errors.'),
     '#default_value' => variable_get('raven_fatal_error_handler', TRUE),
   );
 
   $form['raven_settings']['raven_error_handler'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Error handler'),
+  );
+
+  $form['raven_settings']['raven_error_handler']['raven_error_handler'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable error handler'),
-    '#description' => t('Check for handling errors through watchdog.'),
+    '#description' => t('Check for handling php errors.'),
     '#default_value' => variable_get('raven_error_handler', TRUE),
   );
 
-  $form['raven_settings']['raven_error_levels'] = array(
+  $form['raven_settings']['raven_error_handler']['raven_error_levels'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Error levels'),
     '#description' => t('Check error levels to handle.'),
     '#default_value' => variable_get('raven_error_levels', array()),
-    '#options' => array(
-      'e' . WATCHDOG_DEBUG => 'WATCHDOG_DEBUG',
-      'e' . WATCHDOG_INFO => 'WATCHDOG_INFO',
-      'e' . WATCHDOG_ALERT => 'WATCHDOG_ALERT',
-      'e' . WATCHDOG_NOTICE => 'WATCHDOG_NOTICE',
-      'e' . WATCHDOG_WARNING => 'WATCHDOG_WARNING',
-      'e' . WATCHDOG_ERROR => 'WATCHDOG_ERROR',
-      'e' . WATCHDOG_CRITICAL => 'WATCHDOG_CRITICAL',
-      'e' . WATCHDOG_EMERGENCY => 'WATCHDOG_EMERGENCY',
-    )
+    '#options' => raven_get_error_levels(),
+    '#states' => array(
+      'disabled' => array(
+        ':input[name="raven_error_handler"]' => array('unchecked' => TRUE),
+      ),
+    ),
+  );
+
+  $form['raven_settings']['raven_watchdog_handler'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Watchdog handler'),
+  );
+
+  $form['raven_settings']['raven_watchdog_handler']['raven_watchdog_handler'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable watchdog handler'),
+    '#description' => t('Check for handling watchdog messages (except php errors).'),
+    '#default_value' => variable_get('raven_watchdog_handler', FALSE),
+  );
+
+  $_watchdog_levels = raven_get_watchdog_levels();
+  $watchdog_levels = array();
+  foreach ($_watchdog_levels as $level => $label) {
+    $watchdog_levels[$level + 1] = $label;
+  }
+  $form['raven_settings']['raven_watchdog_handler']['raven_watchdog_levels'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Message levels'),
+    '#description' => t('Check message levels to handle.'),
+    '#default_value' => variable_get('raven_watchdog_levels', array()),
+    '#options' => $watchdog_levels,
+    '#states' => array(
+      'disabled' => array(
+        ':input[name="raven_watchdog_handler"]' => array('unchecked' => TRUE),
+      ),
+    ),
   );
 
   $form['raven_settings']['raven_stack'] = array(
