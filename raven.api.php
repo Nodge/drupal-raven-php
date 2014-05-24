@@ -39,26 +39,9 @@ function hook_raven_extra_alter(&$extra) {
  * @param array $error
  */
 function hook_raven_error_filter_alter(&$error) {
-  $known_errors = array(
-    array(
-      'code' => E_NOTICE,
-      'message' => 'Array to string conversion',
-      'file' => DRUPAL_ROOT . '/sites/all/modules/views/plugins/views_plugin_cache.inc',
-      'line' => 206,
-    ),
-    array(
-      'code' => E_NOTICE,
-      'message' => 'Undefined index: width',
-      'file' => DRUPAL_ROOT . '/sites/all/modules/flexslider/flexslider_fields/flexslider_fields.module',
-      'line' => 140,
-    ),
-    array(
-      'code' => E_NOTICE,
-      'message' => 'Undefined index: height',
-      'file' => DRUPAL_ROOT . '/sites/all/modules/flexslider/flexslider_fields/flexslider_fields.module',
-      'line' => 141,
-    ),
-  );
+  $known_errors = array();
+
+  drupal_alter('raven_known_php_errors', $known_errors);
 
   // Filter known errors to prevent spamming the Sentry server.
   foreach ($known_errors as $known_error) {
@@ -76,6 +59,34 @@ function hook_raven_error_filter_alter(&$error) {
       break;
     }
   }
+}
+
+/**
+ * Provide the list of known php errors.
+ *
+ * @param array $known_errors
+ */
+function hook_raven_known_php_errors_alter(&$known_errors) {
+  $known_errors[] = array(
+    'code' => E_NOTICE,
+    'message' => 'Array to string conversion',
+    'file' => DRUPAL_ROOT . '/sites/all/modules/views/plugins/views_plugin_cache.inc',
+    'line' => 206,
+  );
+
+  $known_errors[] = array(
+    'code' => E_NOTICE,
+    'message' => 'Undefined index: width',
+    'file' => DRUPAL_ROOT . '/sites/all/modules/flexslider/flexslider_fields/flexslider_fields.module',
+    'line' => 140,
+  );
+
+  $known_errors[] = array(
+    'code' => E_NOTICE,
+    'message' => 'Undefined index: height',
+    'file' => DRUPAL_ROOT . '/sites/all/modules/flexslider/flexslider_fields/flexslider_fields.module',
+    'line' => 141,
+  );
 }
 
 /**

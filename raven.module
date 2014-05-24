@@ -364,3 +364,31 @@ function raven_raven_user_alter(&$variables) {
     $variables['roles'] = implode(', ', $user->roles);
   }
 }
+
+/**
+ * Filter php errors.
+ *
+ * @param array $error
+ */
+function raven_raven_error_filter_alter(&$error) {
+  $known_errors = array();
+
+  drupal_alter('raven_known_php_errors', $known_errors);
+
+  // Filter known errors to prevent spamming the Sentry server.
+  foreach ($known_errors as $known_error) {
+    $check = TRUE;
+
+    foreach ($known_error as $key => $value) {
+      if ($error[$key] != $value) {
+        $check = FALSE;
+        break;
+      }
+    }
+
+    if ($check) {
+      $error['process'] = FALSE;
+      break;
+    }
+  }
+}
