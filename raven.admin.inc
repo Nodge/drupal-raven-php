@@ -11,6 +11,7 @@
  *   The form definition.
  * @param array $form_state
  *   The form state.
+ *
  * @return array
  *   The form definition.
  */
