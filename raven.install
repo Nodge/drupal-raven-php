@@ -21,12 +21,6 @@ function raven_uninstall() {
 
 /**
  * Implements hook_requirements().
- *
- * @param string $phase
- *   The phase in which hook_requirements is run: install/runtime.
- *
- * @return array
- *   Raven-php requirements.
  */
 function raven_requirements($phase) {
   $t = get_t();

@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Sample hooks demonstrating usage in Raven-php.
+ */
 
 /**
  * Provide user information for logging.
@@ -42,7 +46,7 @@ function hook_raven_extra_alter(array &$extra) {
  * @param array $error
  *   A reference to array contains error info.
  */
-function hook_raven_error_filter_alter(&$error) {
+function hook_raven_error_filter_alter(array &$error) {
   $known_errors = array();
 
   drupal_alter('raven_known_php_errors', $known_errors);

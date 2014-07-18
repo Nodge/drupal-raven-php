@@ -4,7 +4,17 @@
  * Contains the administration pages for raven.
  */
 
-function raven_settings_form($form, &$form_state) {
+/**
+ * Returns set settings form for Raven-php.
+ *
+ * @param array $form
+ *   The form definition.
+ * @param array $form_state
+ *   The form state.
+ * @return array
+ *   The form definition.
+ */
+function raven_settings_form(array $form, array &$form_state) {
   // Show message if library can not be loaded.
   _raven_get_client();
 

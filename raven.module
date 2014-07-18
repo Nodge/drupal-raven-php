@@ -132,7 +132,8 @@ function raven_init() {
  * @param int $line
  *   The line number the error was raised at.
  * @param array $context
- *   An array of every variable that existed in the scope the error was triggered in.
+ *   An array of every variable that existed in the scope the error was
+ *   triggered in.
  */
 function _raven_error_handler($code, $message, $file = '', $line = 0, array $context = array()) {
   $error_levels = _raven_get_enabled_error_levels();
@@ -269,7 +270,8 @@ function _raven_get_client() {
     $library = libraries_load('raven');
 
     if (!$library['loaded']) {
-      // This function can be called multiple times, so prevent multiple messages.
+      // This function can be called multiple times,
+      // so prevent multiple messages.
       if (!$message_sent) {
         drupal_set_message(t('Raven-php library can not be loaded. Check <a href="!url">reports</a> for more details.', array(
           '!url' => url('admin/reports/status'),
@@ -375,10 +377,6 @@ function raven_get_watchdog_levels() {
 
 /**
  * Implements hook_raven_user_alter().
- * Provide default user account info.
- *
- * @param array $variables
- *   A reference to array of user account info.
  */
 function raven_raven_user_alter(array &$variables) {
   global $user;
@@ -392,10 +390,6 @@ function raven_raven_user_alter(array &$variables) {
 
 /**
  * Implements hook_raven_error_filter_alter().
- * Filter known php errors.
- *
- * @param array $error
- *   A reference to array of error info.
  */
 function raven_raven_error_filter_alter(array &$error) {
   $known_errors = array();
