@@ -1,7 +1,6 @@
 name = "Raven-php for Drupal"
 description = "Raven-php is a PHP client for Sentry (getsentry.com)"
 core = 7.x
-version = 7.x-1.0
 package = Development
 dependencies[] = libraries (2.x)
 configure = admin/config/development/raven

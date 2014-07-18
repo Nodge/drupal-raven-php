@@ -3,15 +3,16 @@
 /**
  * Provide user information for logging.
  *
- * @param array $user
+ * @param array $user_info
+ *   A reference to array of user account info.
  */
-function hook_raven_user_alter(&$user) {
+function hook_raven_user_alter(array &$user_info) {
   global $user;
   if (user_is_logged_in()) {
-    $variables['id'] = $user->uid;
-    $variables['name'] = $user->name;
-    $variables['email'] = $user->mail;
-    $variables['roles'] = implode(', ', $user->roles);
+    $user_info['id'] = $user->uid;
+    $user_info['name'] = $user->name;
+    $user_info['email'] = $user->mail;
+    $user_info['roles'] = implode(', ', $user->roles);
   }
 }
 
@@ -19,24 +20,27 @@ function hook_raven_user_alter(&$user) {
  * Provide tags for logging.
  *
  * @param array $tags
+ *   A reference to array of sentry tags.
  */
-function hook_raven_tags_alter(&$tags) {
-  // todo: example
+function hook_raven_tags_alter(array &$tags) {
+  $tags['foo_version'] = get_foo_version();
 }
 
 /**
  * Provide extra information for logging.
  *
  * @param array $extra
+ *   A reference to array of extra error info.
  */
-function hook_raven_extra_alter(&$extra) {
-  // todo: example
+function hook_raven_extra_alter(array &$extra) {
+  $extra['foo'] = 'bar';
 }
 
 /**
- * Filter php errors.
+ * Filter known errors so do not log them to Sentry again and again.
  *
  * @param array $error
+ *   A reference to array contains error info.
  */
 function hook_raven_error_filter_alter(&$error) {
   $known_errors = array();
@@ -65,8 +69,9 @@ function hook_raven_error_filter_alter(&$error) {
  * Provide the list of known php errors.
  *
  * @param array $known_errors
+ *   A reference to array contains php errors info.
  */
-function hook_raven_known_php_errors_alter(&$known_errors) {
+function hook_raven_known_php_errors_alter(array &$known_errors) {
   $known_errors[] = array(
     'code' => E_NOTICE,
     'message' => 'Array to string conversion',
@@ -90,10 +95,14 @@ function hook_raven_known_php_errors_alter(&$known_errors) {
 }
 
 /**
- * Filter watchdog messages.
+ * Filter known watchdog entries so do not log them to Sentry again and again.
  *
  * @param array $filter
+ *   A reference to array contains log entry info.
  */
-function hook_raven_watchdog_filter_alter(&$filter) {
-  // todo: example
+function hook_raven_watchdog_filter_alter(array &$filter) {
+  $log_entry = $filter['log_entry'];
+  if ($log_entry['type'] === 'foo') {
+    $filter['process'] = FALSE;
+  }
 }

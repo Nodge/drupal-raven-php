@@ -83,22 +83,22 @@ function raven_init() {
     return;
   }
 
-  // config
+  // Get enabled error handlers.
   $exception_handler = variable_get('raven_exception_handler', TRUE);
   $fatal_error_handler = variable_get('raven_fatal_error_handler', TRUE);
   $error_handler = variable_get('raven_error_handler', TRUE);
 
-  // bind the logged in user
+  // Bind the logged in user.
   $user = array();
   drupal_alter('raven_user', $user);
   $client->user_context($user);
 
-  // tag the request with something interesting
+  // Tag the request with something interesting.
   $tags = array();
   drupal_alter('raven_tags', $tags);
   $client->tags_context($tags);
 
-  // provide a bit of additional context
+  // Provide a bit of additional context.
   $extra = array();
   drupal_alter('raven_extra', $extra);
   $client->extra_context($extra);
@@ -110,7 +110,7 @@ function raven_init() {
   }
 
   if ($fatal_error_handler) {
-    $reserved_memory = variable_get('raven_fatal_error_handler_memory', 2.5*1024);
+    $reserved_memory = variable_get('raven_fatal_error_handler_memory', 2.5 * 1024);
     $raven_error_handler->registerShutdownFunction($reserved_memory);
   }
 
@@ -121,13 +121,20 @@ function raven_init() {
 }
 
 /**
+ * PHP error handler.
+ *
  * @param int $code
+ *   The level of the error raised.
  * @param string $message
+ *   The error message.
  * @param string $file
+ *   The filename that the error was raised in.
  * @param int $line
+ *   The line number the error was raised at.
  * @param array $context
+ *   An array of every variable that existed in the scope the error was triggered in.
  */
-function _raven_error_handler($code, $message, $file = '', $line = 0, $context = array()) {
+function _raven_error_handler($code, $message, $file = '', $line = 0, array $context = array()) {
   $error_levels = _raven_get_enabled_error_levels();
   if ($error_levels & $code & error_reporting()) {
     $filter = array(
@@ -154,7 +161,10 @@ function _raven_error_handler($code, $message, $file = '', $line = 0, $context =
 }
 
 /**
+ * Returns PHP error levels which should be logged.
+ *
  * @return int
+ *   Combination of the error levels, joined with the binary OR (|) operator.
  */
 function _raven_get_enabled_error_levels() {
   static $error_levels;
@@ -171,7 +181,7 @@ function _raven_get_enabled_error_levels() {
 }
 
 /**
- * @param array $log_entry
+ * Implements hook_watchdog().
  */
 function raven_watchdog($log_entry) {
   if (!variable_get('raven_enabled', FALSE)) {
@@ -182,7 +192,7 @@ function raven_watchdog($log_entry) {
     return;
   }
 
-  // do not process php errors
+  // Do not process php errors.
   if ($log_entry['type'] === 'php') {
     return;
   }
@@ -246,7 +256,10 @@ function raven_watchdog($log_entry) {
 }
 
 /**
+ * Returns an instance of the Raven-php client.
+ *
  * @return Raven_Client
+ *   Raven-php client library instance.
  */
 function _raven_get_client() {
   static $client;
@@ -256,10 +269,9 @@ function _raven_get_client() {
     $library = libraries_load('raven');
 
     if (!$library['loaded']) {
-      // this function can be called multiple times, so prevent multiple messages
+      // This function can be called multiple times, so prevent multiple messages.
       if (!$message_sent) {
-        $message = 'Raven-php library can not be loaded. Check <a href="!url">reports</a> for more details.';
-        drupal_set_message(t($message, array(
+        drupal_set_message(t('Raven-php library can not be loaded. Check <a href="!url">reports</a> for more details.', array(
           '!url' => url('admin/reports/status'),
         )), 'error');
         $message_sent = TRUE;
@@ -267,13 +279,13 @@ function _raven_get_client() {
       return NULL;
     }
 
-    // config
+    // Prepare config.
     $dsn = variable_get('raven_dsn');
     $timeout = variable_get('raven_timeout', 2);
     $stack = variable_get('raven_stack', TRUE);
     $trace = variable_get('raven_trace', FALSE);
 
-    // Instantiate a new client with a compatible DSN
+    // Instantiate a new client with a compatible DSN.
     $client = new Raven_Client($dsn, array(
       'timeout' => $timeout,
       'auto_log_stacks' => $stack,
@@ -288,7 +300,10 @@ function _raven_get_client() {
 }
 
 /**
+ * Returns an instance of the Reven-php error handler.
+ *
  * @return Raven_ErrorHandler
+ *   Raven-php error handler.
  */
 function _raven_get_error_handler() {
   static $handler;
@@ -304,14 +319,18 @@ function _raven_get_error_handler() {
 }
 
 /**
+ * Returns supported PHP error levels and their labels.
+ *
  * @return array
+ *   An array contains supported PHP error levels and their labels.
  */
 function raven_get_error_levels() {
   $levels = array(
     E_ERROR => 'E_ERROR',
     E_WARNING => 'E_WARNING',
     E_PARSE => 'E_PARSE',
-    E_NOTICE => 'E_NOTICE', // not really useful for Drupal
+    // Note: E_NOTICE is not really useful for Drupal.
+    E_NOTICE => 'E_NOTICE',
     E_CORE_ERROR => 'E_CORE_ERROR',
     E_CORE_WARNING => 'E_CORE_WARNING',
     E_COMPILE_ERROR => 'E_COMPILE_ERROR',
@@ -319,7 +338,8 @@ function raven_get_error_levels() {
     E_USER_ERROR => 'E_USER_ERROR',
     E_USER_WARNING => 'E_USER_WARNING',
     E_USER_NOTICE => 'E_USER_NOTICE',
-    E_STRICT => 'E_STRICT', // not really useful for Drupal
+    // Note: E_STRICT is not really useful for Drupal.
+    E_STRICT => 'E_STRICT',
     E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
   );
 
@@ -334,7 +354,10 @@ function raven_get_error_levels() {
 }
 
 /**
+ * Returns supported watchdog levels and their labels.
+ *
  * @return array
+ *   An array contains supported watchdog levels and their labels.
  */
 function raven_get_watchdog_levels() {
   $levels = array(
@@ -351,11 +374,13 @@ function raven_get_watchdog_levels() {
 }
 
 /**
- * Default implementation of hook_raven_user_alter().
+ * Implements hook_raven_user_alter().
+ * Provide default user account info.
  *
  * @param array $variables
+ *   A reference to array of user account info.
  */
-function raven_raven_user_alter(&$variables) {
+function raven_raven_user_alter(array &$variables) {
   global $user;
   if (user_is_logged_in()) {
     $variables['id'] = $user->uid;
@@ -366,11 +391,13 @@ function raven_raven_user_alter(&$variables) {
 }
 
 /**
- * Filter php errors.
+ * Implements hook_raven_error_filter_alter().
+ * Filter known php errors.
  *
  * @param array $error
+ *   A reference to array of error info.
  */
-function raven_raven_error_filter_alter(&$error) {
+function raven_raven_error_filter_alter(array &$error) {
   $known_errors = array();
 
   drupal_alter('raven_known_php_errors', $known_errors);

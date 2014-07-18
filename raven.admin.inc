@@ -1,13 +1,12 @@
 <?php
-
 /**
  * @file
  * Contains the administration pages for raven.
- *
  */
 
 function raven_settings_form($form, &$form_state) {
-  _raven_get_client(); // show message if library can not be loaded
+  // Show message if library can not be loaded.
+  _raven_get_client();
 
   $form['raven_enabled'] = array(
     '#type' => 'checkbox',
@@ -58,7 +57,7 @@ function raven_settings_form($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Reserved memory'),
     '#description' => t('Reserved memory for fatal error handler (KB).'),
-    '#default_value' => variable_get('raven_fatal_error_handler_memory', 2.5*1024),
+    '#default_value' => variable_get('raven_fatal_error_handler_memory', 2.5 * 1024),
     '#size' => 10,
   );
 
@@ -131,12 +130,5 @@ function raven_settings_form($form, &$form_state) {
     '#default_value' => variable_get('raven_trace', FALSE),
   );
 
-//	$form['#submit'] = array('raven_settings_form_submit');
-
   return system_settings_form($form);
 }
-
-/*function raven_settings_form_submit($form, &$form_state) {
-
-}*/
-
