@@ -229,9 +229,14 @@ function raven_watchdog($log_entry) {
     WATCHDOG_WARNING => Raven_Client::WARNING,
   );
 
+  $variables = $log_entry['variables'];
+  if (!$variables) {
+    $variables = array();
+  }
+
   $data = array(
     'level' => $levels_map[$log_entry['severity']],
-    'message' => strip_tags(format_string($log_entry['message'], $log_entry['variables'])),
+    'message' => strip_tags(format_string($log_entry['message'], $variables)),
     'sentry.interfaces.Message' => array(
       'message' => $log_entry['message'],
       'params' => $log_entry['variables'],
