@@ -52,4 +52,4 @@ modules versions, etc). See `raven.api.php` for examples.
 
 ## Sponsors
 
-This project was developed sponsored by [Seenta](http://seenta.ru/).
+This project was sponsored by [Seenta](http://seenta.ru/).
