@@ -291,12 +291,14 @@ function _raven_get_client() {
     $timeout = variable_get('raven_timeout', 2);
     $stack = variable_get('raven_stack', TRUE);
     $trace = variable_get('raven_trace', FALSE);
+    $environment = variable_get('raven_environment', 'production');
 
     // Instantiate a new client with a compatible DSN.
     $client = new Raven_Client($dsn, array(
       'timeout' => $timeout,
       'auto_log_stacks' => $stack,
       'trace' => $trace,
+      'environment' => $environment,
       'tags' => array(
         'php_version' => phpversion(),
       ),
